@@ -5,31 +5,20 @@
   import {tweened} from 'svelte/motion'
   export let poll;
 
- 
-
-  $: totalVotes = poll.votesA + poll.votesB
-  $: precentA = Math.floor(poll.votesA/totalVotes * 100) || 0
-  $: precentB = Math.floor(poll.votesB/totalVotes * 100) || 0
 
 
-const tweenedA = tweened(0)
-const tweenedB = tweened(0)
+$: totalVotes = poll.totalVotes
 
-$: tweenedA.set(precentA)
-$: tweenedB.set(precentB)
 
-  const handleVote = (option, id) =>{
-    PollStore.update(currentPolls => {
+const handleVote = (index, id) =>{
+  PollStore.update(currentPolls => {
 
-      let copiedPolls = [...currentPolls]
+  let copiedPolls = [...currentPolls]
   let upvotedPoll = copiedPolls.find(poll => poll.id === id)
-  if(option === 'a'){
-    upvotedPoll.votesA++
-  } 
-  if (option === 'b'){
-    upvotedPoll.votesB++
-  }
-  
+ 
+  upvotedPoll.answers[index].votes++
+  upvotedPoll.totalVotes++
+
   return copiedPolls
   } )
 
@@ -51,14 +40,13 @@ const handleDelete = (id) =>{
     <p>
       Total votes: {totalVotes}
     </p>
-    <div class="answer" on:click={()=> handleVote('a', poll.id)}>
-      <div style="width: {$tweenedA}%" class="percent percent-a"></div>
-      <span>{poll.answerA} ({poll.votesA})</span>
+    {#each poll.answers as el,i}
+    <div class="answer" on:click={()=> handleVote(i, poll.id)}>
+      <div style={`width: ${Math.floor(el.votes/totalVotes * 100) || 0}%`} class="percent"></div>
+      <span>{el.answer} ({el.votes})</span>
     </div>
-    <div class="answer" on:click={()=> handleVote('b', poll.id)}>
-      <div style="width: {$tweenedB}%" class="percent percent-b"></div>
-      <span>{poll.answerB} ({poll.votesB})</span>
-    </div>
+    {/each}
+
     <div class="delete" on:click = {() => handleDelete(poll.id)}>
       <Button >
         Delete
@@ -102,18 +90,12 @@ span{
   height: 100%;
   position: absolute;
   box-sizing: border-box;
-
-}
-.percent-a{
-
   border-left: 4px solid #d91b42;
   background: rgba(217, 27, 66, 0.2);
-}
-.percent-b{
+  transition: .3s;
 
-  border-left: 4px solid #45c496;
-  background: rgba(69, 196,150, 0.2);
 }
+
 
 .delete{
   margin-top: 30px;

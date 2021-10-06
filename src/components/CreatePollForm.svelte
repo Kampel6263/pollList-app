@@ -1,73 +1,68 @@
 
 <script>
   import PollStore from '../stores/PollStore.js'
+  import AnswerStore from '../stores/AnswerStore.js'
   import {createEventDispatcher} from 'svelte'
   import Button from '../shared/Button.svelte'
-  let fields = {question: '', answerA: '', answerB: ''}
-  let errors = {question: ' ', answerA: ' ', answerB: ' '}
-  let valid = false
+  import { useForm, Hint, validators, minLength } from "svelte-use-form";
+  const form = useForm();
 
-  const dispatch = createEventDispatcher()
 
-  const submitHandler = () =>{
-    valid = true
-    if(fields.question.trim().length < 5){
-      valid = false
-      errors.question = 'Question must be at least 5 characters long'
-    } else {
-      errors.question = ' '
+let answersArr = []
+
+  AnswerStore.subscribe(data=>{
+    answersArr = data
+  })
+
+
+    const addNewAnswer = () =>{
+      AnswerStore.update(currentAnswer => {
+
+let copiedAnswer = [...currentAnswer]
+let upvotedPoll = copiedAnswer.push({
+  name: `Answer ${copiedAnswer.length+1}`
+})
+
+
+return copiedAnswer
+} )
     }
 
-    if(fields.answerA.trim().length < 1){
-      valid = false
-      errors.answerA = 'Answer A cannot be empty'
-    } else {
-      errors.answerA = ' '
-    }
-    if(fields.answerB.trim().length < 1){
-      valid = false
-      errors.answerB = 'Answer B cannot be empty'
-    } else {
-      errors.answerB = ' '
-    }
-
-    // add new Poll
-
-    if(valid){
-      let poll = {...fields, votesA: 0, votesB: 0, id: Math.random() * Math.random() + Math.random()}
-      PollStore.update(currentPolls =>{
-        return [poll, ...currentPolls]
-      })
-      dispatch('add')
-
-    } else {
-      console.log(errors, 'error');
-    }
-  }
+ 
 </script>
 
-
-  <form on:submit|preventDefault={submitHandler} >
+<main>
+  <form use:form>
     <div class="form-field">
       <label for="question">Poll Question:</label>
-      <input type="text" id="question" bind:value={fields.question}>
-      <span class="error-text">{errors.question}</span>
+      <input name="question" use:validators={[minLength(5)]} />
+      <span class="error-text">
+        <Hint   for="question" on="minLength" let:value>
+          The title requires at least {value} characters.
+        </Hint>
+      </span>
+      
     </div>
+    {#each answersArr as answer}
     <div class="form-field">
-      <label for="answer-a">Answer A:</label>
-      <input type="text" id="answer-a" bind:value={fields.answerA}>
-      <span class="error-text">{errors.answerA}</span>
+      <label for={answer.name}>{answer.name}</label>
+      <input name={answer.name} use:validators={[minLength(7)]} />
+      <span class="error-text">
+        <Hint   for={answer.name} on="minLength" let:value>
+          The title requires at least {value} characters.
+        </Hint>
+      </span>
+      
     </div>
-    <div class="form-field">
-      <label for="answer-b">Answer B:</label>
-      <input type="text" id="answer-b" bind:value={fields.answerB}>
-      <span class="error-text">{errors.answerB}</span>
-    </div>
-    <Button type={'secondary'}>Add Poll</Button>
+    {/each}
+    <div class="add-new" on:click={addNewAnswer}>+ Add one more answer</div>
+    <Button disabled={!$form.valid} type={'secondary'}>Add Poll</Button>
+
   </form>
-
-
+</main>
+  
 <style>
+  
   form{
     width: 400px;
     margin: 0 auto;
@@ -90,4 +85,19 @@
     text-align: left;
     display: block;
   }
+  .add-new{
+    text-align: left;
+    padding: 10px 15px;
+    margin-bottom: 22px;
+    color: #45c496;
+    font-weight: bold;
+    background: #45c49622;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .add-new:hover{
+    background: #45c49644;
+  }
+  
 </style>

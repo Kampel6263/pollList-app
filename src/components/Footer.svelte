@@ -1,6 +1,6 @@
 <footer>
   <div class="copyright">
-    Copyright 2021 Big prg
+    Copyright 2021 Polls app
   </div>
 </footer>
 
